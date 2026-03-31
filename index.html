@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthVue AI - Complete Health Monitoring Ecosystem</title>
+    <style>
+        /* Modern CSS with animations */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+
+        .loader-content {
+            text-align: center;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Main Container */
+        .app-container {
+            display: none;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            transition: transform 0.3s;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .logo {
+            padding: 30px 24px;
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 24px;
+            margin: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #4a5568;
+        }
+
+        .nav-item:hover {
+            background: #f7fafc;
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 24px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 20px;
+            transition: margin-left 0.3s;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .metric-card i {
+            font-size: 32px;
+            opacity: 0.8;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Form Elements */
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-280px);
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 101;
+                background: white;
+                padding: 10px;
+                border-radius: 12px;
+                cursor: pointer;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .menu-toggle {
+                display: none;
+            }
+        }
+
+        /* Chatbot */
+        .chatbot-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 99;
+            transition: transform 0.2s;
+        }
+
+        .chatbot-widget:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .chat-window.open {
+            display: flex;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.bot {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            margin: 0;
+        }
+
+        /* Enhanced Chatbot Styles */
+        .chat-window.open {
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 12px;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: #cbd5e0;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.5;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 12px;
+            margin: 10px 0;
+        }
+
+        .quick-action-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            text-align: left;
+            color: #2d3748;
+        }
+
+        .quick-action-btn:hover {
+            background: #edf2f7;
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateX(2px);
+        }
+
+        /* Message Enhancements */
+        .message {
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .message.user {
+            animation: fadeInRight 0.3s ease;
+        }
+
+        .message.bot {
+            animation: fadeInLeft 0.3s ease;
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            .chat-window {
+                width: 90vw;
+                height: 70vh;
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+            }
+
+            .chatbot-widget {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p style="color: white;">Initializing HealthVue AI Ecosystem...</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <!-- Menu Toggle -->
+        <div class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-heartbeat"></i> HealthVue AI</h1>
+                <p style="font-size: 12px; color: #718096;">v2.0 - Complete Ecosystem</p>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-page="health-data">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Health Data</span>
+                </div>
+                <div class="nav-item" data-page="ai-insights">
+                    <i class="fas fa-brain"></i>
+                    <span>AI Insights</span>
+                </div>
+                <div class="nav-item" data-page="family">
+                    <i class="fas fa-users"></i>
+                    <span>Family Circle</span>
+                </div>
+                <div class="nav-item" data-page="reports">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Medical Reports</span>
+                </div>
+                <div class="nav-item" data-page="appointments">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+
+        <!-- Chatbot Widget -->
+        <div class="chatbot-widget" id="chatbotWidget" title="AI Health Assistant">
+            <i class="fas fa-comments" style="font-size: 24px; color: white;"></i>
+        </div>
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <i class="fas fa-robot"></i> HealthVue AI Assistant
+                <i class="fas fa-times" style="float: right; cursor: pointer; font-size: 16px;" id="closeChat"></i>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">👋 Hello! I'm your AI health assistant. How can I help you today?</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Ask me anything...">
+                <button id="sendMessage" style="background: #667eea; color: white; border: none; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="addHealthModal">
+        <div class="modal-content">
+            <h2>Add Health Data</h2>
+            <form id="healthDataForm">
+                <select id="dataType" required>
+                    <option value="heart_rate">Heart Rate (bpm)</option>
+                    <option value="blood_pressure">Blood Pressure (mmHg)</option>
+                    <option value="blood_sugar">Blood Sugar (mg/dL)</option>
+                    <option value="sleep">Sleep (hours)</option>
+                    <option value="steps">Steps</option>
+                </select>
+                <input type="number" id="dataValue" placeholder="Value" required>
+                <button type="submit">Save Data</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="addFamilyModal">
+        <div class="modal-content">
+            <h2>Add Family Member</h2>
+            <form id="familyForm">
+                <input type="text" id="familyName" placeholder="Full Name" required>
+                <select id="familyRelation">
+                    <option value="parent">Parent</option>
+                    <option value="child">Child</option>
+                    <option value="spouse">Spouse</option>
+                    <option value="other">Other</option>
+                </select>
+                <input type="email" id="familyEmail" placeholder="Email (for sharing)">
+                <button type="submit">Add Member</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Mock Database (LocalStorage)
+        let healthData = JSON.parse(localStorage.getItem('healthData')) || [];
+        let familyMembers = JSON.parse(localStorage.getItem('familyMembers')) || [];
+        let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+        let reports = JSON.parse(localStorage.getItem('reports')) || [];
+
+        // Current User
+        let currentUser = {
+            name: 'Sarah Johnson',
+            email: 'sarah@healthvue.com',
+            risk: 'Low'
+        };
+
+        // Simulated AI Analysis
+        class AIEngine {
+            static detectAnomalies(data) {
+                let anomalies = [];
+                if (data.type === 'heart_rate' && data.value > 100) {
+                    anomalies.push('⚠️ Elevated heart rate detected');
+                }
+                if (data.type === 'blood_pressure') {
+                    let [systolic, diastolic] = data.value.toString().split('/');
+                    if (systolic > 140) anomalies.push('⚠️ High blood pressure alert');
+                }
+                if (data.type === 'blood_sugar' && data.value > 140) {
+                    anomalies.push('⚠️ High blood sugar detected');
+                }
+                return anomalies;
+            }
+
+            static predictRisk(userData) {
+                let riskScore = 0;
+                userData.forEach(record => {
+                    if (record.type === 'heart_rate' && record.value > 100) riskScore += 20;
+                    if (record.type === 'blood_pressure' && parseInt(record.value) > 140) riskScore += 30;
+                    if (record.type === 'blood_sugar' && record.value > 140) riskScore += 25;
+                });
+                if (riskScore > 50) return 'High';
+                if (riskScore > 20) return 'Medium';
+                return 'Low';
+            }
+
+            static getRecommendations(healthData) {
+                let recommendations = [];
+                let recentHR = healthData.filter(d => d.type === 'heart_rate').slice(-7);
+                let avgHR = recentHR.reduce((sum, d) => sum + d.value, 0) / recentHR.length;
+                if (avgHR > 85) recommendations.push('Consider reducing caffeine and practicing deep breathing exercises');
+                
+                let recentSleep = healthData.filter(d => d.type === 'sleep').slice(-7);
+                let avgSleep = recentSleep.reduce((sum, d) => sum + d.value, 0) / recentSleep.length;
+                if (avgSleep < 7) recommendations.push('Aim for 7-8 hours of sleep for optimal recovery');
+                
+                return recommendations;
+            }
+        }
+
+        // Render Functions
+        function renderDashboard() {
+            let recentData = healthData.slice(-10);
+            let risk = AIEngine.predictRisk(healthData);
+            
+            let metrics = {
+                heart_rate: healthData.filter(d => d.type === 'heart_rate').pop(),
+                blood_pressure: healthData.filter(d => d.type === 'blood_pressure').pop(),
+                blood_sugar: healthData.filter(d => d.type === 'blood_sugar').pop(),
+                sleep: healthData.filter(d => d.type === 'sleep').pop(),
+                steps: healthData.filter(d => d.type === 'steps').pop()
+            };
+
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <h1 style="font-size: 28px; color: #2d3748;">Welcome back, ${currentUser.name}!</h1>
+                    <p style="color: #718096;">Your AI-powered health dashboard</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div class="card metric-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="opacity: 0.9;">Heart Rate</p>
+                                <h2 style="font-size: 32px;">${metrics.heart_rate ? metrics.heart_rate.value : '--'} <span style="font-size: 14px;">bpm</span></h2>
+                            </div>
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                    </div>
+                    <div class="card metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="opacity: 0.9;">Blood Pressure</p>
+                                <h2 style="font-size: 32px;">${metrics.blood_pressure ? metrics.blood_pressure.value : '--'} <span style="font-size: 14px;">mmHg</span></h2>
+                            </div>
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                    </div>
+                    <div class="card metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="opacity: 0.9;">Blood Sugar</p>
+                                <h2 style="font-size: 32px;">${metrics.blood_sugar ? metrics.blood_sugar.value : '--'} <span style="font-size: 14px;">mg/dL</span></h2>
+                            </div>
+                            <i class="fas fa-cube"></i>
+                        </div>
+                    </div>
+                    <div class="card metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="opacity: 0.9;">Sleep</p>
+                                <h2 style="font-size: 32px;">${metrics.sleep ? metrics.sleep.value : '--'} <span style="font-size: 14px;">hours</span></h2>
+                            </div>
+                            <i class="fas fa-bed"></i>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                    <div class="card">
+                        <h3><i class="fas fa-chart-line"></i> Health Trends</h3>
+                        <div class="chart-container">
+                            <canvas id="healthTrendsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Risk Assessment</h3>
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 48px; font-weight: bold; color: ${risk === 'Low' ? '#48bb78' : risk === 'Medium' ? '#ed8936' : '#f56565'}">
+                                ${risk}
+                            </div>
+                            <p style="margin-top: 10px;">Current Health Risk Level</p>
+                            <button onclick="showToast('Risk assessment updated based on recent vitals')" style="margin-top: 20px;">View Details</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <h3><i class="fas fa-lightbulb"></i> AI Recommendations</h3>
+                    <ul id="recommendationsList" style="margin-top: 15px;">
+                        ${AIEngine.getRecommendations(healthData).map(rec => `<li style="margin-bottom: 10px;">✓ ${rec}</li>`).join('')}
+                        ${AIEngine.getRecommendations(healthData).length === 0 ? '<li>No recommendations at this time. Great job!</li>' : ''}
+                    </ul>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+            
+            // Render chart
+            setTimeout(() => {
+                let ctx = document.getElementById('healthTrendsChart')?.getContext('2d');
+                if (ctx) {
+                    let heartData = healthData.filter(d => d.type === 'heart_rate').slice(-7).map(d => d.value);
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                            datasets: [{
+                                label: 'Heart Rate (bpm)',
+                                data: heartData,
+                                borderColor: '#667eea',
+                                tension: 0.4
+                            }]
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        function renderHealthData() {
+            let html = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h1 style="font-size: 28px;">Health Data</h1>
+                    <button onclick="document.getElementById('addHealthModal').classList.add('active')">
+                        <i class="fas fa-plus"></i> Add Data
+                    </button>
+                </div>
+                <div class="card">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; text-align: left;">Date</th>
+                                <th style="padding: 12px; text-align: left;">Type</th>
+                                <th style="padding: 12px; text-align: left;">Value</th>
+                                <th style="padding: 12px; text-align: left;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${healthData.slice().reverse().map(record => `
+                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                    <td style="padding: 12px;">${new Date(record.timestamp).toLocaleDateString()}</td>
+                                    <td style="padding: 12px;">${record.type.replace('_', ' ')}</td>
+                                    <td style="padding: 12px;">${record.value}</td>
+                                    <td style="padding: 12px;">
+                                        <span style="background: ${record.anomaly ? '#fed7d7' : '#c6f6d5'}; color: ${record.anomaly ? '#c53030' : '#276749'}; padding: 4px 8px; border-radius: 8px;">
+                                            ${record.anomaly ? 'Alert' : 'Normal'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                            ${healthData.length === 0 ? '<tr><td colspan="4" style="padding: 40px; text-align: center;">No health data yet. Click "Add Data" to get started!</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function renderFamily() {
+            let html = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h1 style="font-size: 28px;">Family Circle</h1>
+                    <button onclick="document.getElementById('addFamilyModal').classList.add('active')">
+                        <i class="fas fa-user-plus"></i> Add Member
+                    </button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                    ${familyMembers.map(member => `
+                        <div class="card">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-user" style="font-size: 24px; color: white;"></i>
+                                </div>
+                                <div>
+                                    <h3>${member.name}</h3>
+                                    <p style="color: #718096;">${member.relation}</p>
+                                    <p style="font-size: 12px;">${member.email || 'No email set'}</p>
+                                </div>
+                            </div>
+                            <button onclick="showToast('Health data sharing enabled for ${member.name}')" style="margin-top: 15px; width: 100%;">Share Health Data</button>
+                        </div>
+                    `).join('')}
+                    ${familyMembers.length === 0 ? '<div class="card" style="text-align: center; padding: 40px;"><i class="fas fa-users" style="font-size: 48px; color: #cbd5e0;"></i><p style="margin-top: 15px;">No family members added yet. Click "Add Member" to start sharing health insights!</p></div>' : ''}
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function renderAIInsights() {
+            let anomalies = healthData.filter(d => d.anomaly);
+            let risk = AIEngine.predictRisk(healthData);
+            
+            let html = `
+                <h1 style="font-size: 28px; margin-bottom: 20px;">AI Health Insights</h1>
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3><i class="fas fa-chart-line"></i> Anomaly Detection</h3>
+                    <div style="margin-top: 15px;">
+                        ${anomalies.map(a => `
+                            <div style="background: #fed7d7; padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+                                <strong>⚠️ ${a.type.replace('_', ' ')} Alert</strong>
+                                <p>Value: ${a.value} detected at ${new Date(a.timestamp).toLocaleString()}</p>
+                                <p style="font-size: 14px;">Recommendation: Please monitor and consult if persists</p>
+                            </div>
+                        `).join('')}
+                        ${anomalies.length === 0 ? '<p style="color: #48bb78;">✅ No anomalies detected. All vitals are within normal ranges!</p>' : ''}
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3><i class="fas fa-chart-simple"></i> Predictive Analytics</h3>
+                    <div style="margin-top: 15px;">
+                        <p><strong>Current Risk Level:</strong> <span style="color: ${risk === 'Low' ? '#48bb78' : risk === 'Medium' ? '#ed8936' : '#f56565'}">${risk}</span></p>
+                        <p style="margin-top: 10px;"><strong>Trend Analysis:</strong> Based on last 30 days of data</p>
+                        <div style="background: #e2e8f0; border-radius: 10px; height: 8px; margin-top: 10px;">
+                            <div style="width: ${risk === 'Low' ? '25%' : risk === 'Medium' ? '50%' : '75%'}; height: 100%; background: ${risk === 'Low' ? '#48bb78' : risk === 'Medium' ? '#ed8936' : '#f56565'}; border-radius: 10px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-lightbulb"></i> Personalized Recommendations</h3>
+                    <ul style="margin-top: 15px;">
+                        ${AIEngine.getRecommendations(healthData).map(rec => `<li style="margin-bottom: 10px;">💡 ${rec}</li>`).join('')}
+                        ${AIEngine.getRecommendations(healthData).length === 0 ? '<li>Keep up the great work! Your health metrics are looking good.</li>' : ''}
+                    </ul>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function renderAppointments() {
+            let html = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h1 style="font-size: 28px;">Appointments</h1>
+                    <button onclick="bookAppointment()">
+                        <i class="fas fa-calendar-plus"></i> Book Appointment
+                    </button>
+                </div>
+                <div class="card">
+                    ${appointments.map(apt => `
+                        <div style="padding: 15px; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3>${apt.doctor}</h3>
+                                    <p>${apt.specialty}</p>
+                                    <p style="font-size: 14px; color: #718096;">${apt.date} at ${apt.time}</p>
+                                </div>
+                                <button onclick="showToast('Appointment reminder set for ${apt.date}')">Remind Me</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${appointments.length === 0 ? '<div style="text-align: center; padding: 40px;"><i class="fas fa-calendar" style="font-size: 48px; color: #cbd5e0;"></i><p style="margin-top: 15px;">No appointments scheduled. Click "Book Appointment" to get started!</p></div>' : ''}
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function renderReports() {
+            let html = `
+                <h1 style="font-size: 28px; margin-bottom: 20px;">Medical Reports</h1>
+                <div class="card">
+                    <div style="border: 2px dashed #e2e8f0; border-radius: 12px; padding: 40px; text-align: center; margin-bottom: 20px;">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #cbd5e0;"></i>
+                        <p style="margin-top: 10px;">Drag and drop or click to upload medical reports</p>
+                        <input type="file" id="reportUpload" multiple accept=".pdf,.jpg,.png" style="display: none;">
+                        <button onclick="document.getElementById('reportUpload').click()">Upload Report</button>
+                    </div>
+                    <div id="reportList">
+                        ${reports.map(report => `
+                            <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <i class="fas fa-file-pdf" style="color: #f56565;"></i>
+                                    <span style="margin-left: 10px;">${report.name}</span>
+                                    <p style="font-size: 12px; color: #718096; margin-left: 28px;">Uploaded: ${new Date(report.uploadDate).toLocaleDateString()}</p>
+                                </div>
+                                <button onclick="showToast('Opening report: ${report.name}')">View</button>
+                            </div>
+                        `).join('')}
+                        ${reports.length === 0 ? '<p style="text-align: center; padding: 20px;">No reports uploaded yet</p>' : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+            
+            document.getElementById('reportUpload')?.addEventListener('change', function(e) {
+                Array.from(e.target.files).forEach(file => {
+                    reports.push({
+                        name: file.name,
+                        size: file.size,
+                        uploadDate: new Date().toISOString()
+                    });
+                    localStorage.setItem('reports', JSON.stringify(reports));
+                });
+                showToast(`${e.target.files.length} report(s) uploaded successfully!`);
+                renderReports();
+            });
+        }
+
+        function renderSettings() {
+            let html = `
+                <h1 style="font-size: 28px; margin-bottom: 20px;">Settings</h1>
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3>Profile Settings</h3>
+                    <form id="profileForm" style="margin-top: 15px;">
+                        <label>Name</label>
+                        <input type="text" id="profileName" value="${currentUser.name}" style="margin-bottom: 15px;">
+                        <label>Email</label>
+                        <input type="email" id="profileEmail" value="${currentUser.email}" style="margin-bottom: 15px;">
+                        <button type="submit">Update Profile</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Connected Devices</h3>
+                    <div style="margin-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0;">
+                            <span><i class="fab fa-google"></i> Google Fit</span>
+                            <button onclick="showToast('Google Fit connected!')">Connect</button>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+                            <span><i class="fab fa-apple"></i> Apple Health</span>
+                            <button onclick="showToast('Apple Health connected!')">Connect</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+            
+            document.getElementById('profileForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentUser.name = document.getElementById('profileName').value;
+                currentUser.email = document.getElementById('profileEmail').value;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showToast('Profile updated successfully!');
+            });
+        }
+
+        // Helper Functions
+        function showToast(message) {
+            let toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fas fa-check-circle" style="color: #48bb78;"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function bookAppointment() {
+            let doctor = prompt("Enter doctor name:");
+            let specialty = prompt("Enter specialty:");
+            let date = prompt("Enter date (YYYY-MM-DD):");
+            let time = prompt("Enter time:");
+            if (doctor && specialty && date && time) {
+                appointments.push({ doctor, specialty, date, time });
+                localStorage.setItem('appointments', JSON.stringify(appointments));
+                showToast('Appointment booked successfully!');
+                renderAppointments();
+            }
+        }
+
+        // Initialize
+        function init() {
+            // Load saved data
+            if (localStorage.getItem('healthData')) healthData = JSON.parse(localStorage.getItem('healthData'));
+            if (localStorage.getItem('familyMembers')) familyMembers = JSON.parse(localStorage.getItem('familyMembers'));
+            
+            // Add sample data if empty
+            if (healthData.length === 0) {
+                let sampleData = [
+                    { type: 'heart_rate', value: 72, timestamp: new Date().toISOString(), anomaly: false },
+                    { type: 'blood_pressure', value: '118/76', timestamp: new Date().toISOString(), anomaly: false },
+                    { type: 'blood_sugar', value: 95, timestamp: new Date().toISOString(), anomaly: false },
+                    { type: 'sleep', value: 7.5, timestamp: new Date().toISOString(), anomaly: false },
+                    { type: 'steps', value: 8942, timestamp: new Date().toISOString(), anomaly: false }
+                ];
+                healthData = sampleData;
+                localStorage.setItem('healthData', JSON.stringify(healthData));
+            }
+            
+            if (familyMembers.length === 0) {
+                familyMembers = [
+                    { name: 'Robert Johnson', relation: 'parent', email: 'robert@example.com' },
+                    { name: 'Emily Johnson', relation: 'child', email: 'emily@example.com' }
+                ];
+                localStorage.setItem('familyMembers', JSON.stringify(familyMembers));
+            }
+            
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    renderDashboard();
+                }, 500);
+            }, 2000);
+            
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    let page = this.getAttribute('data-page');
+                    if (page === 'dashboard') renderDashboard();
+                    else if (page === 'health-data') renderHealthData();
+                    else if (page === 'family') renderFamily();
+                    else if (page === 'ai-insights') renderAIInsights();
+                    else if (page === 'appointments') renderAppointments();
+                    else if (page === 'reports') renderReports();
+                    else if (page === 'settings') renderSettings();
+                    if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('mobile-open');
+                });
+            });
+            
+            // Health Data Form
+            document.getElementById('healthDataForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                let type = document.getElementById('dataType').value;
+                let value = document.getElementById('dataValue').value;
+                let anomaly = AIEngine.detectAnomalies({ type, value }).length > 0;
+                let newRecord = { type, value, timestamp: new Date().toISOString(), anomaly };
+                healthData.push(newRecord);
+                localStorage.setItem('healthData', JSON.stringify(healthData));
+                document.getElementById('addHealthModal').classList.remove('active');
+                showToast('Health data saved successfully!');
+                renderHealthData();
+            });
+            
+            // Family Form
+            document.getElementById('familyForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                let name = document.getElementById('familyName').value;
+                let relation = document.getElementById('familyRelation').value;
+                let email = document.getElementById('familyEmail').value;
+                familyMembers.push({ name, relation, email });
+                localStorage.setItem('familyMembers', JSON.stringify(familyMembers));
+                document.getElementById('addFamilyModal').classList.remove('active');
+                showToast('Family member added!');
+                renderFamily();
+            });
+            
+            // Chatbot
+            document.getElementById('chatbotWidget')?.addEventListener('click', () => {
+                document.getElementById('chatWindow').classList.toggle('open');
+            });
+            document.getElementById('closeChat')?.addEventListener('click', () => {
+                document.getElementById('chatWindow').classList.remove('open');
+            });
+            document.getElementById('sendMessage')?.addEventListener('click', () => {
+                let input = document.getElementById('chatInput');
+                let message = input.value.trim();
+                if (message) {
+                    let messagesDiv = document.getElementById('chatMessages');
+                    messagesDiv.innerHTML += `<div class="message user">${message}</div>`;
+                    input.value = '';
+                    setTimeout(() => {
+                        let response = "Based on your health data, I can help you with that! " + 
+                            (message.toLowerCase().includes('bp') ? "Your last BP reading was normal." :
+                             message.toLowerCase().includes('sleep') ? "Your sleep pattern shows good consistency." :
+                             "Would you like me to check specific health metrics?");
+                        messagesDiv.innerHTML += `<div class="message bot">${response}</div>`;
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }, 500);
+                }
+            });
+            document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') document.getElementById('sendMessage').click();
+            });
+            
+            // Mobile menu
+            document.getElementById('menuToggle')?.addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('mobile-open');
+            });
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        };
+        
+        init();
+    </script>
+    <script src="frontend-api-client.js"></script>
+    <script src="chatbot-system.js"></script>
+</body>
+</html>
